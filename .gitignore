@@ -1,1 +1,2 @@
-clients.txt users.txt used_tokens.txt referral_links.txt pycache/ *.pyc
+data/
+*.txt
