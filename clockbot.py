@@ -199,32 +199,36 @@ main_keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='📍 Как нас найти', callback_data='geo')],
     [InlineKeyboardButton(text='🎁 Бонусы', callback_data='bonus')],
     [InlineKeyboardButton(text='🔥 Текущие акции', callback_data='action')],
-    [InlineKeyboardButton(text='❓ Частые вопросы (FAQ)', callback_data='faq')]
+    [InlineKeyboardButton(text='❓ Частые вопросы', callback_data='faq')]
 ])
 
 referred_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='💰 Мои бонусы', callback_data='check_bonus')],
+    [InlineKeyboardButton(text='💰 Мои бонусы', callback_data='bonus_menu')],
+    [InlineKeyboardButton(text='🔑 Мой код', callback_data='show_code')],
+    [InlineKeyboardButton(text='📍 Как нас найти', callback_data='geo')],
+    [InlineKeyboardButton(text='🔥 Текущие акции', callback_data='action')],
+    [InlineKeyboardButton(text='❓ Частые вопросы', callback_data='faq')]
+])
+
+bonus_submenu = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='💰 Проверить бонусы', callback_data='check_bonus')],
     [InlineKeyboardButton(text='📜 Правила использования бонусов', callback_data='bonus_rules')],
     [InlineKeyboardButton(text='🛍 Сообщить о покупке', callback_data='shopping')],
     [InlineKeyboardButton(text='💸 Списать бонусы', callback_data='use_bonus')],
-    [InlineKeyboardButton(text='🔑 Мой код', callback_data='show_code')],
-    [InlineKeyboardButton(text='📩 Задать вопрос', callback_data='question')],
-    [InlineKeyboardButton(text='📍 Как нас найти', callback_data='geo')],
-    [InlineKeyboardButton(text='🔥 Текущие акции', callback_data='action')],
-    [InlineKeyboardButton(text='❓ Частые вопросы (FAQ)', callback_data='faq')],
-    [InlineKeyboardButton(text='🕰️ Интересные факты', callback_data='clock')]
+    [InlineKeyboardButton(text='⬅️ Назад', callback_data='back')]
 ])
 
-bonus_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='🆕 Зарегистрироваться', callback_data='registration')]
-])
-
-faq_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+faq_submenu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='🕰️ Интересные факты', callback_data='clock')],
+    [InlineKeyboardButton(text='📩 Задать вопрос', callback_data='question')],
     [InlineKeyboardButton(text='🚚 Есть ли доставка?', callback_data='delivery')],
     [InlineKeyboardButton(text='🕒 График работы', callback_data='work')],
     [InlineKeyboardButton(text='🏬 Как найти магазин', callback_data='where')],
     [InlineKeyboardButton(text='⬅️ Назад', callback_data='back')]
+])
+
+bonus_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='🆕 Зарегистрироваться', callback_data='registration')]
 ])
 
 admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -342,10 +346,10 @@ async def admin_delete_promo(callback: CallbackQuery):
                 )
             except Exception as e:
                 logging.error(f"Не удалось отправить уведомление об удалении акции user_id {uid}: {e}")
-        await callback.message.answer("Акция удалена! Пользователи уведомлены.", reply_markup=admin_keyboard)
+        await callback.message.answer("Акция удалена! Пользователи уведомлены.")
         logging.info("Админ удалил акцию")
     except Exception as e:
-        await callback.message.answer("Ошибка удаления акции.", reply_markup=admin_keyboard)
+        await callback.message.answer("Ошибка удаления акции.")
         logging.error(f"Ошибка удаления акции: {e}")
     await callback.answer()
 
@@ -373,7 +377,7 @@ async def process_promo(message: Message):
                 )
             except Exception as e:
                 logging.error(f"Не удалось отправить акцию user_id {uid}: {e}")
-        await message.answer("Акция обновлена!", reply_markup=admin_keyboard)
+        await message.answer("Акция обновлена!")
         logging.info(f"Админ обновил акцию: {text}")
     except Exception as e:
         await message.answer("Ошибка обновления акции.")
@@ -399,11 +403,10 @@ async def process_check_code(message: Message):
     if code in clients:
         total = get_total_bonus(clients[code])
         await message.answer(
-            f"Для кода {code}:\nБонусов: {total}\nTelegram ID: {clients[code]['telegram_id']}",
-            reply_markup=admin_keyboard
+            f"Для кода {code}:\nБонусов: {total}\nTelegram ID: {clients[code]['telegram_id']}"
         )
     else:
-        await message.answer("Код не найден.", reply_markup=admin_keyboard)
+        await message.answer("Код не найден.")
 
 @dp.callback_query(F.data == 'admin_list_clients')
 async def admin_list_clients(callback: CallbackQuery):
@@ -412,13 +415,13 @@ async def admin_list_clients(callback: CallbackQuery):
         return
     clients = await load_clients()
     if not clients:
-        await callback.message.answer("Нет клиентов.", reply_markup=admin_keyboard)
+        await callback.message.answer("Нет клиентов.")
         return
     response = "Список клиентов:\n"
     for code, client in clients.items():
         total = get_total_bonus(client)
         response += f"Код: {code}, Бонусов: {total}, Telegram ID: {client['telegram_id']}\n"
-    await callback.message.answer(response, reply_markup=admin_keyboard)
+    await callback.message.answer(response)
     await callback.answer()
 
 @dp.callback_query(F.data == 'admin_stats')
@@ -435,7 +438,7 @@ async def admin_stats(callback: CallbackQuery):
         f"Пользователей: {len(users)}\n"
         f"Общее количество бонусов: {total_bonuses}"
     )
-    await callback.message.answer(response, reply_markup=admin_keyboard)
+    await callback.message.answer(response)
     await callback.answer()
 
 @dp.callback_query(F.data == 'geo')
@@ -452,28 +455,40 @@ async def bonus_program(callback: CallbackQuery):
     if await is_referred_user(callback.from_user.id):
         await callback.message.answer(
             f"Собирайте бонусы — 5% от каждой покупки часов. Тратьте на любой товар в магазине!",
-            reply_markup=referred_keyboard,
             parse_mode="HTML"
         )
     else:
         await callback.message.answer(
             f"Собирайте бонусы — 5% от каждой покупки часов. Тратьте на любой товар в магазине!\n\n"
             f"Чтобы начать, зарегистрируйтесь по реферальной ссылке из магазина.",
-            reply_markup=bonus_keyboard,
             parse_mode="HTML"
         )
+    await callback.answer()
+
+@dp.callback_query(F.data == 'bonus_menu')
+async def bonus_menu(callback: CallbackQuery):
+    if not await is_referred_user(callback.from_user.id):
+        await callback.message.answer(
+            "Вы не зарегистрированы. Используйте реферальную ссылку из магазина.",
+            parse_mode="HTML"
+        )
+        return
+    await callback.message.answer(
+        "Выберите действие с бонусами:",
+        reply_markup=bonus_submenu,
+        parse_mode="HTML"
+    )
     await callback.answer()
 
 @dp.callback_query(F.data == 'bonus_rules')
 async def bonus_rules(callback: CallbackQuery):
     await callback.message.answer(
         "📜 Правила использования бонусов:\n"
-        "- Бонусы начисляются в размере 5% от суммы покупки.\n"
+        "- Бонусы начисляются в размере 5% от суммы покупки часов.\n"
         "- Бонусы можно использовать для оплаты до 50% стоимости товара.\n"
         "- Бонусы действительны 180 дней с даты начисления.\n"
         "- Для списания бонусов покажите ваш код в магазине.",
-        parse_mode="HTML",
-        reply_markup=referred_keyboard
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -481,8 +496,7 @@ async def bonus_rules(callback: CallbackQuery):
 async def registration_info(callback: CallbackQuery):
     await callback.message.answer(
         f"Чтобы зарегистрироваться, используйте реферальную ссылку из магазина.",
-        parse_mode="HTML",
-        reply_markup=main_keyboard
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -498,7 +512,6 @@ async def ask_amount(callback: CallbackQuery):
     if not await is_referred_user(callback.from_user.id):
         await callback.message.answer(
             "Вы не зарегистрированы. Используйте реферальную ссылку из магазина.",
-            reply_markup=main_keyboard,
             parse_mode="HTML"
         )
         return
@@ -513,11 +526,11 @@ async def ask_amount(callback: CallbackQuery):
 async def receive_purchase(message: Message):
     user_context.pop('waiting_for_purchase_amount', None)
     if not message.text.isdigit() or int(message.text) <= 0:
-        await message.answer("Ошибка: введите положительное число (например, 8500).", reply_markup=referred_keyboard)
+        await message.answer("Ошибка: введите положительное число (например, 8500).", parse_mode="HTML")
         return
     amount = int(message.text)
     if amount < 500:
-        await message.answer("Сумма покупки слишком маленькая. Минимум - 500 руб.", reply_markup=referred_keyboard)
+        await message.answer("Сумма покупки слишком маленькая. Минимум - 500 руб.", parse_mode="HTML")
         return
     bonus = int(amount * 0.05)
     user_id = message.from_user.id
@@ -532,7 +545,7 @@ async def receive_purchase(message: Message):
         reply_markup=get_confirm_keyboard(user_id),
         parse_mode="HTML"
     )
-    await message.answer("Заявка отправлена! Админ подтвердит бонусы.", reply_markup=referred_keyboard)
+    await message.answer("Заявка отправлена! Админ подтвердит бонусы.", parse_mode="HTML")
 
 @dp.callback_query(F.data == "check_bonus")
 async def check_bonus(callback: CallbackQuery):
@@ -545,10 +558,10 @@ async def check_bonus(callback: CallbackQuery):
             msg = f"У вас {total} бонусов."
             if expiring > 0:
                 msg += f"\n⚠️ {expiring} бонусов истекут в течение 30 дней!"
-            await callback.message.answer(msg, reply_markup=referred_keyboard)
+            await callback.message.answer(msg, parse_mode="HTML")
             await callback.answer()
             return
-    await callback.message.answer("Вы не зарегистрированы.", reply_markup=main_keyboard)
+    await callback.message.answer("Вы не зарегистрированы.", parse_mode="HTML")
 
 @dp.callback_query(F.data == 'use_bonus')
 async def use_bonus(callback: CallbackQuery):
@@ -563,14 +576,15 @@ async def use_bonus(callback: CallbackQuery):
     user_id = str(callback.from_user.id)
     code = next((c for c, client in clients.items() if client["telegram_id"] == user_id), None)
     if not code:
-        await callback.message.answer("Вы не зарегистрированы.", reply_markup=main_keyboard)
+        await callback.message.answer("Вы не зарегистрированы.", parse_mode="HTML")
         return
     total = get_total_bonus(clients[code])
     if total == 0:
-        await callback.message.answer("У вас нет бонусов.", reply_markup=referred_keyboard)
+        await callback.message.answer("У вас нет бонусов.", parse_mode="HTML")
         return
     await callback.message.answer(
-        f"У вас {total} бонусов. Введите сумму покупки (руб), чтобы запросить списание (до 50% стоимости). Показывайте код {code} в магазине для подтверждения."
+        f"У вас {total} бонусов. Введите сумму покупки (руб), чтобы запросить списание (до 50% стоимости). Показывайте код {code} в магазине для подтверждения.",
+        parse_mode="HTML"
     )
     user_context['waiting_for_use_bonus'] = user_id
     await callback.answer()
@@ -581,30 +595,30 @@ async def show_code(callback: CallbackQuery):
     user_id = str(callback.from_user.id)
     code = next((c for c, client in clients.items() if client["telegram_id"] == user_id), None)
     if code:
-        await callback.message.answer(f"Ваш код: {code}", reply_markup=referred_keyboard)
+        await callback.message.answer(f"Ваш код: {code}", parse_mode="HTML")
     else:
-        await callback.message.answer("Вы не зарегистрированы.", reply_markup=main_keyboard)
+        await callback.message.answer("Вы не зарегистрированы.", parse_mode="HTML")
     await callback.answer()
 
 @dp.message(lambda message: user_context.get('waiting_for_use_bonus') == str(message.from_user.id))
 async def process_use_bonus(message: Message):
     user_id = str(message.from_user.id)
     if not message.text.isdigit() or int(message.text) <= 0:
-        await message.answer("Ошибка: введите положительное число (например, 8500).", reply_markup=referred_keyboard)
+        await message.answer("Ошибка: введите положительное число (например, 8500).", parse_mode="HTML")
         user_context.pop('waiting_for_use_bonus', None)
         return
     amount = int(message.text)
     clients = await load_clients()
     code = next((c for c, client in clients.items() if client["telegram_id"] == user_id), None)
     if not code:
-        await message.answer("Ошибка: код не найден.", reply_markup=main_keyboard)
+        await message.answer("Ошибка: код не найден.", parse_mode="HTML")
         user_context.pop('waiting_for_use_bonus', None)
         return
     total_bonuses = get_total_bonus(clients[code])
     max_discount = amount // 2
     use_bonuses = min(total_bonuses, max_discount)
     if use_bonuses == 0:
-        await message.answer("У вас недостаточно бонусов для списания.", reply_markup=referred_keyboard)
+        await message.answer("У вас недостаточно бонусов для списания.", parse_mode="HTML")
         user_context.pop('waiting_for_use_bonus', None)
         return
     remaining = total_bonuses - use_bonuses
@@ -620,7 +634,7 @@ async def process_use_bonus(message: Message):
         reply_markup=get_confirm_keyboard(user_id, is_spend=True),
         parse_mode="HTML"
     )
-    await message.answer(f"Заявка отправлена! Админ подтвердит списание. Покажите код {code} в магазине.", reply_markup=referred_keyboard)
+    await message.answer(f"Заявка отправлена! Админ подтвердит списание. Покажите код {code} в магазине.", parse_mode="HTML")
     user_context.pop('waiting_for_use_bonus', None)
 
 @dp.callback_query(F.data.startswith('confirm_'))
@@ -648,8 +662,7 @@ async def confirm_purchase(callback: CallbackQuery):
         await bot.send_message(
             user_id,
             f"🎉 Вам зачислено {bonus} бонусов!",
-            parse_mode="HTML",
-            reply_markup=referred_keyboard
+            parse_mode="HTML"
         )
         await callback.message.edit_text("✅ Покупка подтверждена. Бонусы зачислены! 🎊")
         logging.info(f"Подтверждено начисление: user_id {user_id}, +{bonus} бонусов")
@@ -657,8 +670,7 @@ async def confirm_purchase(callback: CallbackQuery):
         await bot.send_message(
             user_id,
             "Ошибка: клиент не найден. Обратитесь в магазин по адресу: проспект Генерала Острякова, 60.",
-            parse_mode="HTML",
-            reply_markup=main_keyboard
+            parse_mode="HTML"
         )
         await callback.message.edit_text("❌ Ошибка: клиент не найден")
         logging.error(f"Клиент user_id {user_id} не найден")
@@ -694,8 +706,7 @@ async def confirm_spend(callback: CallbackQuery):
             user_id,
             f"✅ Вы использовали {use_bonuses} бонусов! Остаток: {remaining} бонусов.\n\n"
             f"Покажите код {code} в магазине для скидки.",
-            parse_mode="HTML",
-            reply_markup=referred_keyboard
+            parse_mode="HTML"
         )
         await callback.message.edit_text("✅ Использование бонусов подтверждено! 🎊")
         logging.info(f"Подтверждено списание: код {code}, -{use_bonuses} бонусов, остаток {remaining}")
@@ -703,8 +714,7 @@ async def confirm_spend(callback: CallbackQuery):
         await bot.send_message(
             user_id,
             "Ошибка: клиент не найден. Обратитесь в магазин по адресу: проспект Генерала Острякова, 60.",
-            parse_mode="HTML",
-            reply_markup=main_keyboard
+            parse_mode="HTML"
         )
         await callback.message.edit_text("❌ Ошибка: клиент не найден")
         logging.error(f"Клиент user_id {user_id} не найден")
@@ -718,8 +728,7 @@ async def reject_purchase(callback: CallbackQuery):
         await bot.send_message(
             user_id,
             "К сожалению, покупка не подтверждена. Обратитесь в магазин по адресу: проспект Генерала Острякова, 60.",
-            parse_mode="HTML",
-            reply_markup=referred_keyboard
+            parse_mode="HTML"
         )
         await callback.message.edit_text("❌ Покупка отклонена.")
         logging.info(f"Покупка для кода {code} отклонена")
@@ -729,8 +738,7 @@ async def reject_purchase(callback: CallbackQuery):
         await bot.send_message(
             user_id,
             "К сожалению, использование бонусов не подтверждено. Обратитесь в магазин по адресу: проспект Генерала Острякова, 60.",
-            parse_mode="HTML",
-            reply_markup=referred_keyboard
+            parse_mode="HTML"
         )
         await callback.message.edit_text("❌ Использование бонусов отклонено.")
         logging.info(f"Списание бонусов для кода {code} отклонено")
@@ -771,7 +779,7 @@ async def action(callback: CallbackQuery):
 async def faq_question(callback: CallbackQuery):
     await callback.message.answer(
         "Задайте вопрос о нашем магазине или часах!",
-        reply_markup=faq_keyboard,
+        reply_markup=faq_submenu,
         parse_mode="HTML"
     )
     await callback.answer()
@@ -779,14 +787,12 @@ async def faq_question(callback: CallbackQuery):
 @dp.callback_query(F.data == 'clock')
 async def interesting_facts(callback: CallbackQuery):
     if not facts_for_clock:
-        await callback.message.answer("Факты о часах временно недоступны.")
+        await callback.message.answer("Факты о часах временно недоступны.", parse_mode="HTML")
         logging.error("Список facts_for_clock пуст")
         await callback.answer()
         return
     fact = random.choice(facts_for_clock)
     await callback.message.answer(f"Интересный факт о часах:\n\n{fact}", parse_mode="HTML")
-    keyboard = referred_keyboard if await is_referred_user(callback.from_user.id) else main_keyboard
-    await callback.message.answer("Выберите, что вас интересует 👇", reply_markup=keyboard, parse_mode="HTML")
     await callback.answer()
 
 @dp.callback_query(F.data == 'delivery')
@@ -819,7 +825,6 @@ async def my_question(callback: CallbackQuery):
     if not await is_referred_user(callback.from_user.id):
         await callback.message.answer(
             "Вы не зарегистрированы. Используйте реферальную ссылку из магазина.",
-            reply_markup=main_keyboard,
             parse_mode="HTML"
         )
         return
@@ -846,15 +851,13 @@ async def forward_question_to_admin(message: Message):
         )
         await message.answer(
             "Ваш вопрос отправлен! Мы ответим в ближайшее время.",
-            parse_mode="HTML",
-            reply_markup=referred_keyboard
+            parse_mode="HTML"
         )
         logging.info(f"Вопрос от user_id {user_id} отправлен админу")
     except Exception as e:
         await message.answer(
             "Не удалось отправить вопрос. Обратитесь в магазин по адресу: проспект Генерала Острякова, 60.",
-            parse_mode="HTML",
-            reply_markup=referred_keyboard
+            parse_mode="HTML"
         )
         logging.error(f"Ошибка отправки вопроса от user_id {user_id}: {e}")
 
@@ -863,19 +866,18 @@ async def send_admin_reply(message: Message):
     user_id = user_context.pop('waiting_for_admin_reply', None)
     if user_id:
         if len(message.text) > 4096:
-            await message.answer("Ошибка: ответ слишком длинный (максимум 4096 символов).", reply_markup=admin_keyboard)
+            await message.answer("Ошибка: ответ слишком длинный (максимум 4096 символов).")
             return
         try:
             await bot.send_message(
                 user_id,
                 message.text,
-                parse_mode="HTML",
-                reply_markup=referred_keyboard
+                parse_mode="HTML"
             )
-            await message.answer("Ответ отправлен пользователю.", reply_markup=admin_keyboard)
+            await message.answer("Ответ отправлен пользователю.")
             logging.info(f"Ответ админа отправлен user_id {user_id}")
         except Exception as e:
-            await message.answer("Не удалось отправить ответ пользователю.", reply_markup=admin_keyboard)
+            await message.answer("Не удалось отправить ответ пользователю.")
             logging.error(f"Ошибка отправки ответа user_id {user_id}: {e}")
 
 @dp.callback_query(F.data.startswith('reply_'))
